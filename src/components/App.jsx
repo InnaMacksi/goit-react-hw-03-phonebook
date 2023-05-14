@@ -1,16 +1,74 @@
-export const App = () => {
-  return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: 40,
-        color: '#010101'
-      }}
-    >
-      React homework template
-    </div>
-  );
-};
+import { Component } from "react";
+import { nanoid } from 'nanoid';
+
+import { ContactForm } from "./ContactForm/ContactForm";
+import ContactList from "./ContactList/ContactList";
+import Filter from "./Filter/Filter";
+import styles from './app.module.css';
+
+export class App extends Component {
+state = {
+  contacts: [
+    {id: 'id-1', name: 'Rosie Simpson', number: '459-12-56'},
+    {id: 'id-2', name: 'Hermione Kline', number: '443-89-12'},
+    {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
+    {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'},
+  ],
+  filter: ''
+  }
+
+  componentDidMount() {
+    const savedContacts = localStorage.getItem("contacts");
+  if (savedContacts) {
+    this.setState({ contacts: JSON.parse(savedContacts) });
+  }
+  }
+
+  componentDidUpdate(prevState) {
+  if (this.state.contacts !== prevState.contacts) {
+    localStorage.setItem("contacts", JSON.stringify(this.state.contacts));
+  }
+  }  
+
+
+ changeFilter = (e) => {
+    const { value } = e.currentTarget;
+    this.setState({filter: value})
+  }
+
+filteredContacts = () => {
+    const normalizedFilter = this.state.filter.toLowerCase();
+    return this.state.contacts.filter(contact => {
+     return contact.name.toLowerCase().includes(normalizedFilter)
+    })
+  }
+
+deleteContact = (idContacts) => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(contact => contact.id !== idContacts)
+    }))
+  }
+handleSubmit = (name, number) => {
+    const isExist = this.state.contacts.find(contact => { return contact.name === name })
+      if (isExist) {
+        return alert(`${name} is already in contacts.`)
+    }
+    this.setState(prevState => ({
+        contacts: [...prevState.contacts, { name, id: nanoid(), number }]
+      }))
+      this.setState({ name: '', number: '' })
+  }
+
+
+  
+  render() {
+    const filered = this.filteredContacts();
+    return <div className={styles.container}>
+      <h1>Phonebook</h1>
+      <ContactForm onSubmit={this.handleSubmit} />
+      <h2>Contacts</h2>
+      <Filter value={this.state.filter} onChange={this.changeFilter} />
+      <ContactList contacts={filered} onDelete={this.deleteContact} />
+  </div>
+}
+}
